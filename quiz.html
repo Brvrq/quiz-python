@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Quiz de Revisão - Lógica de Programação</title>
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#1e293b;
+    --accent:#38bdf8;
+    --accent2:#22c55e;
+    --danger:#ef4444;
+    --text:#e2e8f0;
+    --muted:#94a3b8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:var(--text);
+    padding:24px 12px 60px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  header{
+    text-align:center;
+    margin-bottom:24px;
+  }
+  header h1{
+    font-size:1.6rem;
+    margin-bottom:4px;
+  }
+  header p{
+    color:var(--muted);
+    font-size:0.95rem;
+    margin:0;
+  }
+  .diff-selector{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin:18px 0 22px;
+  }
+  .diff-label{
+    color:var(--muted);
+    font-size:.85rem;
+    margin-right:4px;
+  }
+  .diff-btn{
+    background:#0b1220;
+    border:1px solid #334155;
+    color:var(--muted);
+    padding:7px 16px;
+    border-radius:20px;
+    font-size:.85rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .diff-btn:hover{
+    border-color:var(--accent);
+    color:var(--text);
+  }
+  .diff-btn.active{
+    color:#0f172a;
+    border-color:transparent;
+  }
+  .diff-btn[data-diff="facil"].active{ background:var(--accent2); }
+  .diff-btn[data-diff="medio"].active{ background:var(--accent); }
+  .diff-btn[data-diff="dificil"].active{ background:var(--danger); color:#fff; }
+  #progress-bar-outer{
+    background:#334155;
+    border-radius:20px;
+    height:10px;
+    overflow:hidden;
+    margin:16px 0 28px;
+  }
+  #progress-bar-inner{
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    height:100%;
+    width:0%;
+    transition:width .3s ease;
+  }
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    padding:20px 22px;
+    margin-bottom:18px;
+    box-shadow:0 4px 14px rgba(0,0,0,.35);
+    border:1px solid #334155;
+  }
+  .q-number{
+    display:inline-block;
+    background:var(--accent);
+    color:#0f172a;
+    font-weight:700;
+    font-size:.8rem;
+    padding:3px 10px;
+    border-radius:20px;
+    margin-bottom:10px;
+  }
+  .q-text{
+    font-size:1rem;
+    margin-bottom:10px;
+    line-height:1.5;
+  }
+  pre{
+    background:#0b1220;
+    border:1px solid #334155;
+    border-radius:8px;
+    padding:12px 14px;
+    overflow-x:auto;
+    font-size:.85rem;
+    line-height:1.4;
+    color:#a5f3fc;
+    margin:0 0 14px;
+  }
+  .options label{
+    display:block;
+    background:#0b1220;
+    border:1px solid #334155;
+    border-radius:8px;
+    padding:10px 12px;
+    margin-bottom:8px;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+    font-size:.92rem;
+  }
+  .options label:hover{
+    border-color:var(--accent);
+  }
+  .options input{margin-right:8px;}
+  .options label.correct{
+    border-color:var(--accent2);
+    background:rgba(34,197,94,.15);
+  }
+  .options label.wrong{
+    border-color:var(--danger);
+    background:rgba(239,68,68,.15);
+  }
+  .explain{
+    margin-top:10px;
+    font-size:.85rem;
+    color:var(--muted);
+    display:none;
+    border-left:3px solid var(--accent);
+    padding-left:10px;
+  }
+  .btn-row{
+    display:flex;
+    gap:10px;
+    margin-top:6px;
+    flex-wrap:wrap;
+  }
+  #submit-btn, #new-test-btn{
+    flex:1 1 200px;
+    display:block;
+    padding:14px;
+    font-size:1rem;
+    font-weight:600;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  #submit-btn{
+    background:linear-gradient(90deg,var(--accent),#0ea5e9);
+    color:#0f172a;
+  }
+  #submit-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+  }
+  #result{
+    text-align:center;
+    padding:26px 20px;
+    border-radius:14px;
+    background:var(--card);
+    border:1px solid #334155;
+    display:none;
+    margin-bottom:18px;
+  }
+  #result h2{margin-top:0;font-size:1.8rem;}
+  #result p{color:var(--muted);}
+  #new-test-btn{
+    background:transparent;
+    color:var(--accent);
+    border:1px solid var(--accent);
+  }
+  #new-test-btn:hover{
+    background:rgba(56,189,248,.12);
+  }
+  #stats-bar{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+    font-size:.8rem;
+    color:var(--muted);
+  }
+  #stats-bar span{
+    background:#0b1220;
+    border:1px solid #334155;
+    border-radius:20px;
+    padding:4px 12px;
+  }
+  #timer-display{
+    text-align:center;
+    font-size:1.1rem;
+    font-weight:600;
+    color:var(--accent);
+    margin-bottom:6px;
+    letter-spacing:.5px;
+  }
+  #review-list{
+    text-align:left;
+    margin-top:16px;
+    border-top:1px solid #334155;
+    padding-top:14px;
+  }
+  #review-list h3{
+    font-size:.95rem;
+    margin:0 0 10px;
+    color:var(--text);
+  }
+  #review-list ul{
+    list-style:none;
+    padding:0;
+    margin:0;
+  }
+  #review-list li{
+    background:#0b1220;
+    border:1px solid #334155;
+    border-radius:8px;
+    padding:8px 12px;
+    margin-bottom:6px;
+    font-size:.85rem;
+  }
+  #review-list li .r-your{ color:var(--danger); }
+  #review-list li .r-correct{ color:var(--accent2); }
+  #review-list .all-correct{
+    color:var(--accent2);
+    font-weight:600;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🐍 Quiz de Revisão — Lógica de Programação</h1>
+    <p>match-case, condicionais, laços (for/while) e listas</p>
+  </header>
+
+  <div class="diff-selector" id="diff-selector">
+    <span class="diff-label">Dificuldade (para novos testes):</span>
+    <button type="button" class="diff-btn" data-diff="facil">Fácil</button>
+    <button type="button" class="diff-btn active" data-diff="medio">Médio</button>
+    <button type="button" class="diff-btn" data-diff="dificil">Difícil</button>
+  </div>
+
+  <div id="progress-bar-outer"><div id="progress-bar-inner"></div></div>
+  <div id="timer-display">⏱ 00:00</div>
+
+  <div id="result">
+    <h2 id="score-text"></h2>
+    <p id="score-msg"></p>
+    <div id="review-list"></div>
+  </div>
+
+  <div id="stats-bar"></div>
+
+  <form id="quiz-form"></form>
+
+  <div class="btn-row">
+    <button id="submit-btn">Corrigir Quiz</button>
+    <button id="new-test-btn" type="button">🔄 Gerar Novo Teste</button>
+  </div>
+</div>
+
+<script>
+// ---------- Banco de questões fixas (conjunto inicial) ----------
+const staticQuestions = [
+  {
+    q: "Qual a saída do código abaixo?",
+    code: `opcao = 2
+match opcao:
+    case 1:
+        print("Cadastrar")
+    case 2:
+        print("Consultar")
+    case 3:
+        print("Excluir")
+    case _:
+        print("Opção inválida")`,
+    options: ["Cadastrar","Consultar","Excluir","Opção inválida"],
+    correct: 1,
+    explain: "Como opcao vale 2, o case 2 é executado, imprimindo 'Consultar'."
+  },
+  {
+    q: "Qual a saída do código abaixo?",
+    code: `numero = 7
+match numero:
+    case 1 | 2 | 3:
+        print("Baixo")
+    case 4 | 5 | 6:
+        print("Médio")
+    case 7 | 8 | 9:
+        print("Alto")
+    case _:
+        print("Outro")`,
+    options: ["Baixo","Médio","Alto","Outro"],
+    correct: 2,
+    explain: "7 está no grupo 'case 7 | 8 | 9', então imprime 'Alto'."
+  },
+  {
+    q: "Qual a saída do código abaixo?",
+    code: `x = 10
+if x > 5:
+    print("A")
+elif x > 8:
+    print("B")
+else:
+    print("C")`,
+    options: ["A","B","C","A e B"],
+    correct: 0,
+    explain: "A primeira condição (x > 5) já é verdadeira, então só 'A' é impresso — o elif nem é avaliado."
+  },
+  {
+    q: "O que representa o case _ dentro de um bloco match?",
+    code: `numero = 3
+match numero:
+    case 1:
+        print("Um")
+    case 2:
+        print("Dois")
+    case _:
+        print("Outro")`,
+    options: [
+      "Representa obrigatoriamente o número zero",
+      "Funciona como opção padrão quando nenhum case corresponde ao valor",
+      "Provoca erro porque não pode ser usado em match",
+      "Faz o programa repetir o match"
+    ],
+    correct: 1,
+    explain: "O 'case _' é o coringa (default) do match, executado quando nenhum outro caso combina."
+  },
+  {
+    q: "Qual será a saída?",
+    code: `x = 2
+y = 5
+if x < y:
+    x = x + y
+if x > 6:
+    y = y - 2
+else:
+    y = y + 2
+print(x, y)`,
+    options: ["2 5","7 3","7 7","3 7"],
+    correct: 1,
+    explain: "x vira 7 (2+5). Como 7 > 6, y = 5 - 2 = 3. Saída: 7 3."
+  },
+  {
+    q: "Qual será a saída?",
+    code: `total = 0
+for i in range(4):
+    total += i
+print(total)`,
+    options: ["4","5","6","10"],
+    correct: 2,
+    explain: "range(4) gera 0,1,2,3. Soma: 0+1+2+3 = 6."
+  },
+  {
+    q: "Qual será a saída?",
+    code: `cont = 1
+total = 0
+while cont <= 4:
+    total += cont
+    cont += 1
+print(total)`,
+    options: ["4","5","6","10"],
+    correct: 3,
+    explain: "Soma de 1+2+3+4 = 10, enquanto cont for menor ou igual a 4."
+  },
+  {
+    q: "Qual será a saída?",
+    code: `x = 20
+contador = 0
+while x > 3:
+    x //= 2
+    contador += 1
+print(x, contador)`,
+    options: ["2 3","2 4","3 3","3 4"],
+    correct: 1,
+    explain: "20→10→5→2 (para de dividir pois 2 não é >3). São 4 divisões, x final = 2. Saída: 2 4."
+  },
+  {
+    q: "valores = [10, 20, 30]\nprint(valores[3])\nQual alternativa indica o erro real?",
+    code: `valores = [10, 20, 30]
+print(valores[3])`,
+    options: [
+      "A lista não pode conter números inteiros",
+      "O índice 2 corresponde ao último elemento",
+      "O índice 3 está fora do limite da lista, causando IndexError",
+      "O comando print() não pode acessar listas"
+    ],
+    correct: 2,
+    explain: "A lista tem índices 0,1,2 (3 elementos). O índice 3 não existe, gerando IndexError."
+  },
+  {
+    q: "Qual será a saída?",
+    code: `lista = [1, 2, 3]
+for i in range(len(lista)):
+    lista.append(lista[i] * 2)
+print(lista)`,
+    options: [
+      "[1, 2, 3, 2, 4, 6]",
+      "[1, 2, 3, 2, 4, 6, 12]",
+      "[1, 2, 3, 2, 4, 6, 8, 10, 12]",
+      "O for entra em loop infinito"
+    ],
+    correct: 0,
+    explain: "range(len(lista)) é calculado UMA vez no início (len=3), então o for roda só 3 vezes, mesmo a lista crescendo depois."
+  },
+  {
+    q: "O que acontece neste código?",
+    code: `lista = [1, 2, 3]
+i = 0
+while i < len(lista):
+    lista.append(lista[i] * 2)
+    i += 1
+print(lista)`,
+    options: [
+      "A lista termina com 6 elementos",
+      "A lista termina com 9 elementos",
+      "O while termina normalmente com 12 elementos",
+      "O while não termina, pois len(lista) também cresce"
+    ],
+    correct: 3,
+    explain: "Diferente do for com range(), aqui len(lista) é reavaliado a cada iteração do while — como a lista cresce a cada volta, i nunca alcança len(lista), gerando loop infinito."
+  },
+  {
+    q: "Qual será a saída?",
+    code: `lista = [2, 4, 6, 8]
+for i in range(len(lista)):
+    if lista[i] > 4:
+        lista[i] -= 2
+    else:
+        lista[i] += 1
+print(lista)`,
+    options: [
+      "[3, 5, 4, 6]",
+      "[3, 5, 6, 8]",
+      "[2, 4, 4, 6]",
+      "[3, 5, 6, 10]"
+    ],
+    correct: 0,
+    explain: "2→+1=3 | 4→+1=5 | 6→-2=4 | 8→-2=6. Resultado: [3, 5, 4, 6]."
+  },
+  {
+    q: "Qual a diferença correta entre for e while?",
+    options: [
+      "O for só trabalha com números, o while só com textos",
+      "O while sempre executa exatamente cinco vezes",
+      "O for percorre uma sequência; o while repete enquanto uma condição for verdadeira",
+      "O for não pode utilizar range()"
+    ],
+    correct: 2,
+    explain: "O for é ideal para percorrer sequências (listas, range, etc.); o while repete um bloco enquanto a condição continuar verdadeira."
+  },
+  {
+    q: "Qual será a saída?",
+    code: `lista = []
+for i in range(5):
+    if i % 2 == 0:
+        lista.append(i)
+    else:
+        lista.append(i * 2)
+print(lista)`,
+    options: [
+      "[0, 1, 2, 3, 4]",
+      "[0, 2, 2, 6, 4]",
+      "[0, 2, 4, 6, 8]",
+      "[0, 1, 4, 3, 8]"
+    ],
+    correct: 1,
+    explain: "i=0(par)→0 | i=1(ímpar)→2 | i=2(par)→2 | i=3(ímpar)→6 | i=4(par)→4. Resultado: [0, 2, 2, 6, 4]."
+  },
+  {
+    q: "Qual será a saída?",
+    code: `x = 4
+if x > 2:
+    x += 3
+    if x > 6:
+        x -= 2
+    elif x > 4:
+        x += 5
+print(x)`,
+    options: ["5","7","8","12"],
+    correct: 0,
+    explain: "x=4, entra no if (4>2): x += 3 → x=7. Como 7>6 é verdadeiro, executa x -= 2 → x=5. O elif nem é avaliado, pois o if interno já foi satisfeito."
+  }
+];
+
+// ---------- Utilitários ----------
+function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function shuffleOptions(options, correctIndex){
+  const withFlag = options.map((opt, i) => ({opt, isCorrect: i === correctIndex}));
+  for(let i = withFlag.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [withFlag[i], withFlag[j]] = [withFlag[j], withFlag[i]];
+  }
+  return {
+    options: withFlag.map(w => w.opt),
+    correct: withFlag.findIndex(w => w.isCorrect)
+  };
+}
+
+// ---------- Geradores procedurais (mesmo nível/lógica dos exercícios originais) ----------
+function genMatchCase(){
+  const n = randInt(1, 9);
+  let answer = n <= 3 ? "Baixo" : n <= 6 ? "Médio" : "Alto";
+  const code = `numero = ${n}\nmatch numero:\n    case 1 | 2 | 3:\n        print("Baixo")\n    case 4 | 5 | 6:\n        print("Médio")\n    case 7 | 8 | 9:\n        print("Alto")\n    case _:\n        print("Outro")`;
+  const {options, correct} = shuffleOptions(["Baixo","Médio","Alto","Outro"], ["Baixo","Médio","Alto","Outro"].indexOf(answer));
+  return {q:"Qual a saída do código abaixo?", code, options, correct,
+    explain:`numero vale ${n}, que cai no grupo correspondente a "${answer}".`};
+}
+
+function genIfElifTrap(diff='medio'){
+  const range = diff === 'facil' ? [1,10] : diff === 'dificil' ? [1,30] : [1,15];
+  const x = randInt(range[0], range[1]);
+  const answer = x > 5 ? "A" : "C"; // elif (x>8) nunca é alcançado, pois exige x<=5 e x>8 ao mesmo tempo
+  const code = `x = ${x}\nif x > 5:\n    print("A")\nelif x > 8:\n    print("B")\nelse:\n    print("C")`;
+  const opts = ["A","B","C","A e B"];
+  const {options, correct} = shuffleOptions(opts, opts.indexOf(answer));
+  return {q:"Qual a saída do código abaixo?", code, options, correct,
+    explain:`x=${x}. Como a condição x > 5 é avaliada primeiro, se for verdadeira o elif nunca roda (nunca dá para ter x>5 E x>8 ao mesmo tempo sem que o if já tenha capturado). Resultado: "${answer}".`};
+}
+
+function genForSum(diff='medio'){
+  const [startMax, spanMin, spanMax] = diff === 'facil' ? [2,2,4] : diff === 'dificil' ? [5,6,12] : [3,3,7];
+  const start = randInt(0, startMax);
+  const end = randInt(start + spanMin, start + spanMax);
+  let total = 0;
+  for(let i = start; i < end; i++) total += i;
+  const code = `total = 0\nfor i in range(${start}, ${end}):\n    total += i\nprint(total)`;
+  const distractors = new Set([total+1, total-1, end-start, total*2]);
+  distractors.delete(total);
+  const opts = [String(total), ...[...distractors].slice(0,3).map(String)];
+  const {options, correct} = shuffleOptions(opts, 0);
+  return {q:"Qual será a saída?", code, options, correct,
+    explain:`range(${start}, ${end}) percorre de ${start} a ${end-1}. Somando esses valores obtemos ${total}.`};
+}
+
+function genWhileSum(diff='medio'){
+  const [limMin, limMax] = diff === 'facil' ? [3,4] : diff === 'dificil' ? [6,12] : [3,7];
+  const limit = randInt(limMin, limMax);
+  let cont = 1, total = 0;
+  while(cont <= limit){ total += cont; cont += 1; }
+  const code = `cont = 1\ntotal = 0\nwhile cont <= ${limit}:\n    total += cont\n    cont += 1\nprint(total)`;
+  const distractors = new Set([total+1, total-1, limit, total*2]);
+  distractors.delete(total);
+  const opts = [String(total), ...[...distractors].slice(0,3).map(String)];
+  const {options, correct} = shuffleOptions(opts, 0);
+  return {q:"Qual será a saída?", code, options, correct,
+    explain:`O laço soma 1+2+...+${limit}, totalizando ${total}.`};
+}
+
+function genWhileDiv(diff='medio'){
+  const [sMin, sMax] = diff === 'facil' ? [10,20] : diff === 'dificil' ? [50,300] : [15,60];
+  const start = randInt(sMin, sMax);
+  let x = start, contador = 0;
+  while(x > 3){ x = Math.floor(x / 2); contador += 1; }
+  const code = `x = ${start}\ncontador = 0\nwhile x > 3:\n    x //= 2\n    contador += 1\nprint(x, contador)`;
+  const answer = `${x} ${contador}`;
+  const distractors = new Set([`${x+1} ${contador}`, `${x} ${contador+1}`, `${x} ${Math.max(contador-1,0)}`]);
+  const opts = [answer, ...distractors];
+  const {options, correct} = shuffleOptions(opts, 0);
+  return {q:"Qual será a saída?", code, options, correct,
+    explain:`Cada volta faz x //= 2 até x deixar de ser maior que 3. Partindo de ${start}, chega-se a x=${x} após ${contador} divisões.`};
+}
+
+function genListTransform(diff='medio'){
+  const len = diff === 'facil' ? 3 : diff === 'dificil' ? 5 : 4;
+  const maxVal = diff === 'dificil' ? 15 : 10;
+  const list = Array.from({length:len}, () => randInt(1, maxVal));
+  const result = list.map(v => v > 4 ? v - 2 : v + 1);
+  const code = `lista = [${list.join(", ")}]\nfor i in range(len(lista)):\n    if lista[i] > 4:\n        lista[i] -= 2\n    else:\n        lista[i] += 1\nprint(lista)`;
+  const wrong1 = list.map(v => v > 4 ? v + 2 : v - 1);
+  const wrong2 = list.map(v => v > 4 ? v - 1 : v + 2);
+  const fmt = arr => `[${arr.join(", ")}]`;
+  const opts = [fmt(result), fmt(wrong1), fmt(wrong2), fmt(list)];
+  const {options, correct} = shuffleOptions(opts, 0);
+  return {q:"Qual será a saída?", code, options, correct,
+    explain:`Cada elemento maior que 4 perde 2; os demais ganham 1. Resultado: ${fmt(result)}.`};
+}
+
+function genIndexError(diff='medio'){
+  const [lMin, lMax] = diff === 'facil' ? [3,4] : diff === 'dificil' ? [5,9] : [3,6];
+  const len = randInt(lMin, lMax);
+  const list = Array.from({length:len}, (_, i) => (i+1) * 10);
+  const idx = len; // sempre 1 acima do último índice válido
+  const code = `valores = [${list.join(", ")}]\nprint(valores[${idx}])`;
+  const opts = [
+    "A lista não pode conter números inteiros",
+    `O índice ${len-1} corresponde ao último elemento da lista`,
+    `O índice ${idx} está fora do limite da lista, causando IndexError`,
+    "O comando print() não pode acessar listas"
+  ];
+  const {options, correct} = shuffleOptions(opts, 2);
+  return {q:"Qual alternativa indica o erro real?", code, options, correct,
+    explain:`A lista tem ${len} elementos (índices de 0 a ${len-1}). O índice ${idx} não existe, gerando IndexError.`};
+}
+
+function genNestedIf(diff='medio'){
+  const maxX = diff === 'dificil' ? 20 : 10;
+  const x = randInt(1, maxX);
+  let y;
+  if(x > 2){
+    y = x + 3;
+    if(y > 6) y = y - 2;
+    else if(y > 4) y = y + 5;
+  } else {
+    y = x;
+  }
+  const code = `x = ${x}\nif x > 2:\n    x += 3\n    if x > 6:\n        x -= 2\n    elif x > 4:\n        x += 5\nprint(x)`;
+  const distractors = new Set([y+2, y-2, x]);
+  distractors.delete(y);
+  const opts = [String(y), ...[...distractors].slice(0,3).map(String)];
+  const {options, correct} = shuffleOptions(opts, 0);
+  return {q:"Qual será a saída?", code, options, correct,
+    explain:`x=${x}. ${x>2 ? `Como x>2, x vira ${x+3}. Depois avalia o if/elif interno (baseado nesse novo valor de x), resultando em x=${y}.` : `Como x não é maior que 2, o bloco interno nem roda, então x continua ${x}.`}`};
+}
+
+function genAppendTrap(diff='medio'){
+  const len = diff === 'dificil' ? 4 : 3;
+  const list = Array.from({length:len}, () => randInt(1, 9));
+  const result = [...list];
+  for(let i = 0; i < list.length; i++){ result.push(list[i] * 2); } // range(len(lista)) é fixado ANTES do loop começar
+  const fmt = arr => `[${arr.join(", ")}]`;
+  const code = `lista = [${list.join(", ")}]\nfor i in range(len(lista)):\n    lista.append(lista[i] * 2)\nprint(lista)`;
+  const opts = [
+    fmt(result),
+    "O for entra em loop infinito",
+    fmt(list),
+    fmt([...result, list[0]*2])
+  ];
+  const {options, correct} = shuffleOptions(opts, 0);
+  return {q:"Qual será a saída?", code, options, correct,
+    explain:`range(len(lista)) é calculado UMA única vez, com o tamanho original (${list.length}). O for roda apenas ${list.length} vezes, mesmo a lista crescendo durante a execução. Resultado: ${fmt(result)}.`};
+}
+
+const generatorsByDifficulty = {
+  facil:   [genMatchCase, genForSum, genWhileSum, genIndexError, genListTransform],
+  medio:   [genMatchCase, genIfElifTrap, genForSum, genWhileSum, genWhileDiv, genListTransform, genIndexError, genNestedIf],
+  dificil: [genIfElifTrap, genWhileDiv, genListTransform, genNestedIf, genAppendTrap, genForSum, genWhileSum, genIndexError]
+};
+
+let currentDifficulty = 'medio';
+
+function generateNewQuiz(n = 12){
+  const generators = generatorsByDifficulty[currentDifficulty];
+  const pool = [];
+  // garante ao menos 1 questão de cada tipo disponível no nível, depois completa aleatoriamente
+  generators.forEach(gen => pool.push(gen(currentDifficulty)));
+  while(pool.length < n){
+    const gen = generators[randInt(0, generators.length - 1)];
+    pool.push(gen(currentDifficulty));
+  }
+  // embaralha a ordem das questões
+  for(let i = pool.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, n);
+}
+
+// ---------- Estado ----------
+let currentQuestions = staticQuestions;
+const sessionStats = { attempts: 0, bestScore: 0, bestTotal: 0, bestTime: null };
+
+let timerInterval = null;
+let secondsElapsed = 0;
+
+function updateTimerDisplay(){
+  const m = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+  const s = String(secondsElapsed % 60).padStart(2, '0');
+  document.getElementById('timer-display').textContent = `⏱ ${m}:${s}`;
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  secondsElapsed = 0;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    secondsElapsed++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);
+}
+
+const form = document.getElementById('quiz-form');
+const submitBtn = document.getElementById('submit-btn');
+const newTestBtn = document.getElementById('new-test-btn');
+const resultBox = document.getElementById('result');
+const scoreText = document.getElementById('score-text');
+const scoreMsg = document.getElementById('score-msg');
+const progressInner = document.getElementById('progress-bar-inner');
+const statsBar = document.getElementById('stats-bar');
+const diffButtons = document.querySelectorAll('.diff-btn');
+
+diffButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    diffButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDifficulty = btn.dataset.diff;
+  });
+});
+
+function renderStats(){
+  if(sessionStats.attempts === 0){ statsBar.innerHTML = ''; return; }
+  const bestTimeStr = sessionStats.bestTime !== null
+    ? `${String(Math.floor(sessionStats.bestTime/60)).padStart(2,'0')}:${String(sessionStats.bestTime%60).padStart(2,'0')}`
+    : '--:--';
+  statsBar.innerHTML = `
+    <span>Tentativas: ${sessionStats.attempts}</span>
+    <span>Melhor pontuação: ${sessionStats.bestScore}/${sessionStats.bestTotal}</span>
+    <span>Melhor tempo: ${bestTimeStr}</span>
+  `;
+}
+
+function renderQuiz(){
+  form.innerHTML = '';
+  currentQuestions.forEach((item, qi) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const num = document.createElement('div');
+    num.className = 'q-number';
+    num.textContent = `Questão ${qi+1}`;
+    card.appendChild(num);
+
+    const qText = document.createElement('div');
+    qText.className = 'q-text';
+    qText.textContent = item.q;
+    card.appendChild(qText);
+
+    if(item.code){
+      const pre = document.createElement('pre');
+      pre.textContent = item.code;
+      card.appendChild(pre);
+    }
+
+    const optsDiv = document.createElement('div');
+    optsDiv.className = 'options';
+    item.options.forEach((opt, oi) => {
+      const label = document.createElement('label');
+      label.dataset.qi = qi;
+      label.dataset.oi = oi;
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = `q${qi}`;
+      input.value = oi;
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(String.fromCharCode(65+oi) + ') ' + opt));
+      optsDiv.appendChild(label);
+    });
+    card.appendChild(optsDiv);
+
+    const explain = document.createElement('div');
+    explain.className = 'explain';
+    explain.id = `explain-${qi}`;
+    explain.textContent = item.explain;
+    card.appendChild(explain);
+
+    form.appendChild(card);
+  });
+  updateProgress();
+  renderStats();
+  startTimer();
+}
+
+function updateProgress(){
+  const total = currentQuestions.length;
+  let answered = 0;
+  currentQuestions.forEach((_, qi) => {
+    if(form.querySelector(`input[name="q${qi}"]:checked`)) answered++;
+  });
+  progressInner.style.width = `${(answered/total)*100}%`;
+}
+
+form.addEventListener('change', updateProgress);
+
+submitBtn.addEventListener('click', () => {
+  let score = 0;
+  let allAnswered = true;
+  const wrongList = [];
+
+  currentQuestions.forEach((item, qi) => {
+    const selected = form.querySelector(`input[name="q${qi}"]:checked`);
+    if(!selected){ allAnswered = false; return; }
+    const chosen = parseInt(selected.value);
+    const labels = form.querySelectorAll(`label[data-qi="${qi}"]`);
+    labels.forEach(label => {
+      const oi = parseInt(label.dataset.oi);
+      const input = label.querySelector('input');
+      input.disabled = true;
+      if(oi === item.correct) label.classList.add('correct');
+      else if(oi === chosen && chosen !== item.correct) label.classList.add('wrong');
+    });
+    document.getElementById(`explain-${qi}`).style.display = 'block';
+    if(chosen === item.correct){
+      score++;
+    } else {
+      wrongList.push({
+        number: qi + 1,
+        your: item.options[chosen],
+        correct: item.options[item.correct]
+      });
+    }
+  });
+
+  if(!allAnswered){
+    alert('Responda todas as questões antes de corrigir!');
+    return;
+  }
+
+  stopTimer();
+  submitBtn.style.display = 'none';
+  resultBox.style.display = 'block';
+
+  const total = currentQuestions.length;
+  scoreText.textContent = `${score} / ${total} acertos`;
+
+  sessionStats.attempts += 1;
+  const isNewBest = score > sessionStats.bestScore
+    || (score === sessionStats.bestScore && total < sessionStats.bestTotal)
+    || sessionStats.attempts === 1;
+  if(isNewBest){
+    sessionStats.bestScore = score;
+    sessionStats.bestTotal = total;
+    sessionStats.bestTime = secondsElapsed;
+  }
+  renderStats();
+
+  let msg = '';
+  const pct = score / total;
+  if(pct === 1) msg = '🎉 Perfeito! Você dominou o conteúdo.';
+  else if(pct >= 0.7) msg = '👍 Muito bom! Revise os pontos que errou.';
+  else if(pct >= 0.5) msg = '📘 Razoável — vale revisar match-case, laços e listas.';
+  else msg = '📚 Continue estudando! Releia os exercícios com atenção aos loops e índices.';
+  scoreMsg.textContent = msg;
+
+  const reviewDiv = document.getElementById('review-list');
+  if(wrongList.length === 0){
+    reviewDiv.innerHTML = `<p class="all-correct">✅ Você acertou todas as questões desta rodada!</p>`;
+  } else {
+    reviewDiv.innerHTML = `<h3>Questões para revisar:</h3><ul>${
+      wrongList.map(w => `<li>Questão ${w.number}: sua resposta <span class="r-your">${w.your}</span> — correta: <span class="r-correct">${w.correct}</span></li>`).join('')
+    }</ul>`;
+  }
+
+  resultBox.scrollIntoView({behavior:'smooth'});
+});
+
+newTestBtn.addEventListener('click', () => {
+  currentQuestions = generateNewQuiz(12);
+  resultBox.style.display = 'none';
+  submitBtn.style.display = 'block';
+  renderQuiz();
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+renderQuiz();
+</script>
+</body>
+</html>
